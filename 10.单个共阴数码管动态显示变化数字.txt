@@ -1,0 +1,52 @@
+/*-----------------------------------------------
+  名称：1个共阴数码管显示变化数字
+  编写：10
+  日期：2024.4.22
+  修改：无
+  内容：通过循环赋值给P1，让数码管显示特定的字符或者数字
+------------------------------------------------*/
+#include <REGX52.H>
+
+// 数字0到F的编码，共阴数码管的编码方式
+unsigned char RE[] = { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F,
+                            0x77, 0x7C, 0x39, 0x5E, 0x79, 0x71 };
+
+// 延时函数，用于控制数码管的刷新速度
+void Delay(unsigned int xms)
+{
+    while (xms--) {
+        unsigned char i, j;
+
+        i = 2;
+        j = 239;
+        do
+        {
+            while (--j);
+        } while (--i);
+    }
+}
+// 数码管显示函数，根据传入的位置和数字显示相应的数码
+void re(unsigned char Location, unsigned char Number) {
+    switch (Location) {
+    case 1: P2_4 = 1; P2_3 = 1; P2_2 = 1; break; // 选择第1位数码管
+    case 2: P2_4 = 1; P2_3 = 1; P2_2 = 0; break; // 选择第2位数码管
+    case 3: P2_4 = 1; P2_3 = 0; P2_2 = 1; break; // 选择第3位数码管
+    case 4: P2_4 = 1; P2_3 = 0; P2_2 = 0; break; // 选择第4位数码管
+    case 5: P2_4 = 0; P2_3 = 1; P2_2 = 1; break; // 选择第5位数码管
+    case 6: P2_4 = 0; P2_3 = 1; P2_2 = 0; break; // 选择第6位数码管
+    case 7: P2_4 = 0; P2_3 = 0; P2_2 = 1; break; // 选择第7位数码管
+    case 8: P2_4 = 0; P2_3 = 0; P2_2 = 0; break; // 选择第8位数码管
+    }
+    P0 = RE[Number]; // 在选定的位置显示相应的数字
+    Delay(200); // 延时
+}
+void main()
+{
+	unsigned char i;
+    while (1) {
+        // 循环显示数字0到7，每次在不同的数码管上显示
+        for (i = 0; i < 8; i++) 
+            re(i + 1, i);
+    }
+}
+
