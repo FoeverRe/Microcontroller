@@ -1,0 +1,37 @@
+/*-----------------------------------------------
+  名称：花样点灯
+  编写：7
+  日期：2024.4.22
+  修改：无
+  内容：用数组首先
+------------------------------------------------*/
+#include<reg52.h> //包含头文件，一般情况不需要改动，头文件包含特殊功能寄存器的定义
+void Delay(unsigned int xms)		//@12.000MHz
+{
+	while (xms--) {
+		unsigned char i, j;
+		i = 2;
+		j = 239;
+		do
+		{
+			while (--j);
+		} while (--i);
+	}
+}
+unsigned char code table[] = { 0x7f,0xbf,0xdf,0xef,
+							0xf7,0xfb,0xfd,0xfe,
+							0xff,0xff,0x00,0x00,
+							0x55,0x55,0xaa,0xaa};
+void main()
+{
+
+	unsigned char i;  
+	while (1)        
+	{
+		for (i = 0; i < 16; i++)  
+		{
+			P2 = table[i];
+			Delay(200);
+		}
+	}
+}
