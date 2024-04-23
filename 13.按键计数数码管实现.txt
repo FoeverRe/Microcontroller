@@ -1,0 +1,70 @@
+/*-----------------------------------------------
+  名称：按键P3_1计数数码管显示
+  编写：13
+  日期：2024.4.23
+  修改：无
+  内容：通过按P3_1来计数，并且在数码管上显示
+其实一直在写这段代码的时候一直有一个问题，就是我每次按下P3-1的时候，他的个位会加一
+这符合我的需求，但是，我每按下一次按键，十位都会闪烁，我不知道怎么解决。
+------------------------------------------------*/
+#include <REGX52.H> 
+unsigned char RE[] = { 0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F }; // 数码管段码数组
+void Delay(unsigned int xms)   //延时函数
+{
+    while (xms--) {
+        unsigned char i, j;
+        i = 2;
+        j = 239;
+        do {
+            while (--j);
+        } while (--i);
+    }
+}
+void re(unsigned char Location, unsigned char Number) { // 数码管显示函数
+    switch (Location) {
+    case 1: P2_4 = 1; P2_3 = 1; P2_2 = 1; break; // 控制数码管位置
+    case 2: P2_4 = 1; P2_3 = 1; P2_2 = 0; break;
+    case 3: P2_4 = 1; P2_3 = 0; P2_2 = 1; break;
+    case 4: P2_4 = 1; P2_3 = 0; P2_2 = 0; break;
+    case 5: P2_4 = 0; P2_3 = 1; P2_2 = 1; break;
+    case 6: P2_4 = 0; P2_3 = 1; P2_2 = 0; break;
+    case 7: P2_4 = 0; P2_3 = 0; P2_2 = 1; break;
+    case 8: P2_4 = 0; P2_3 = 0; P2_2 = 0; break;
+    }
+    P0 = RE[Number]; // 在数码管上显示数字
+    Delay(5); // 延时一段时间
+}
+void main() {
+    unsigned char tens = 0; // 十位数
+    unsigned char ones = 0; // 个位数
+    while (1) {
+        re(1, tens); // 显示十位数
+        re(2, ones); // 显示个位数
+        if (P3_1 == 0) { // 如果按键按下
+            Delay(20);
+            while (P3_1 == 0); // 等待按键释放
+            ones++; // 个位数加1
+            if (ones > 9) { // 如果个位数大于9
+                ones = 0; // 个位数归零
+                tens++; // 十位数加1
+                if (tens > 9) { // 如果十位数大于9
+                    tens = 0; // 十位数归零
+                }
+            }
+        }
+    }
+}
+//void main() {
+//    unsigned char count = 0; // 计数变量
+//    while (1) { // 主循环
+//        re(1, count / 10); // 显示十位数
+//        re(2, count % 10); // 显示个位数
+//        if (P3_1 == 0) { // 检测按键 P3_1 是否按下
+//            Delay(20); // 去抖动延时
+//            while (P3_1 == 0); // 等待按键释放
+//            count++; // 每次按下按键计数加一
+//            if (count > 99) // 如果计数超过 99
+//                count = -1; // 重新从 -1 开始计数
+//        }
+//    }
+//}
