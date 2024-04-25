@@ -1,0 +1,66 @@
+/*-----------------------------------------------
+  名称：按键控制LED流水模式-定时器0
+  编写：14
+  日期：2024.4.25
+  修改：无
+  内容：点亮P2的流水灯,用P3口的按键来控制LED的流水方向，利用定时器的知识点来解决
+------------------------------------------------*/
+#include <REGX52.H> 
+#include <INTRINS.H>
+unsigned char KeyNum, LEDMode; //声明存储按键号码和 LED 模式的变量
+void Delay(unsigned int xms)	//延时函数，以毫秒为单位
+{
+	while (xms--) { // 循环 xms 次
+		unsigned char i, j;
+		i = 2;
+		j = 239;
+		do
+		{
+			while (--j); // 内部循环延时
+		} while (--i);
+	}
+}
+void Time0_Init() { // 定时器初始化函数
+	TMOD &= 0xF0; // 清除定时器模式设置
+	TMOD |= 0x01; // 将定时器0设置为模式1（16位定时/计数器）
+	TF0 = 0; // 清除定时器0溢出标志位
+	TR0 = 1; // 启动定时器0
+	TH0 = 0xFC; // 初始化定时器0高8位
+	TL0 = 0x18; // 初始化定时器0低8位
+	EA = 1; // 允许全局中断
+	ET0 = 1; // 允许定时器0中断
+}
+unsigned char Key() { // 按键扫描函数
+	unsigned char KeyNumber = 0; // 存储按键号码的变量
+	if (P3_1 == 0) { Delay(20); while (P3_1 == 0); Delay(20); KeyNumber = 1; } // 检测第一个按键状态
+	if (P3_0 == 0) { Delay(20); while (P3_0 == 0); Delay(20); KeyNumber = 2; } // 检测第二个按键状态
+	if (P3_2 == 0) { Delay(20); while (P3_2 == 0); Delay(20); KeyNumber = 3; } // 检测第三个按键状态
+	if (P3_3 == 0) { Delay(20); while (P3_3 == 0); Delay(20); KeyNumber = 4; } // 检测第四个按键状态
+	return KeyNumber; // 返回按键号码
+}
+void main() { // 主函数
+	P2 = 0xFE; // 初始化 P2 端口，将 P2 端口的最低位设置为低电平（假设是用来控制 LED 的）
+	Time0_Init(); // 初始化定时器0
+	while (1) { // 主循环
+		KeyNum = Key(); // 检测按键
+		if (KeyNum) { // 如果检测到按键按下
+			if (KeyNum == 1) { // 如果按下的是第一个按键
+				LEDMode++; // 切换 LED 模式
+				if (LEDMode >= 2)	LEDMode = 0; // 如果模式值超过2，重置为0
+			}
+		}
+	}
+}
+void a() interrupt 1 { // 定时器0中断服务函数
+	static unsigned char count = 0; // 静态变量，用于计数
+	TH0 = 0xFC; // 重新加载定时器0高8位
+	TL0 = 0x18; // 重新加载定时器0低8位
+	count++; // 计数加1
+	if (count >= 1000) { // 每秒钟执行一次
+		count = 0; // 计数清零
+		if (LEDMode == 0) // 如果 LED 模式为0
+			P2 = _crol_(P2, 1); // 将 P2 端口的数据循环左移1位（向左移动一个 LED 灯）
+		if (LEDMode == 1) // 如果 LED 模式为1
+			P2 = _cror_(P2, 1); // 将 P2 端口的数据循环右移1位（向右移动一个 LED 灯）
+	}
+}
